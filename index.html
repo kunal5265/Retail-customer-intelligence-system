@@ -1,1 +1,83 @@
-404: Not Found
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AETHER // Retail Customer Intelligence & Propensity Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg:#050608; --panel:#0b0d13; --card:#10141f; --cyan:#00f0ff; --emerald:#05ffa1; --crimson:#ff2a6d; --amber:#ffb800; --text:#e6edf3; --muted:#6e7681; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    header { height: 50px; background: #07090e; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: space-between; padding: 0 1.25rem; font-size: 0.8rem; }
+    .grid-kpi { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; padding: 1rem 1.25rem; }
+    .kpi { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); padding: 1rem; border-radius: 3px; }
+    .kpi-val { font-size: 1.5rem; font-weight: 700; margin: 0.3rem 0; }
+    .main { display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; padding: 0 1.25rem 1rem; flex: 1; min-height: 0; }
+    .box { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 3px; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+    .box-head { padding: 0.6rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 0.75rem; font-weight: 600; display: flex; justify-content: space-between; }
+    canvas#radar { width: 100%; height: 100%; cursor: crosshair; }
+    .table-wrap { overflow-y: auto; flex: 1; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.7rem; font-family: 'JetBrains Mono', monospace; }
+    th, td { padding: 0.5rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.04); text-align: left; }
+    th { background: #090b10; color: var(--muted); position: sticky; top: 0; }
+    tr:hover { background: rgba(0, 240, 255, 0.04); cursor: pointer; }
+  </style>
+</head>
+<body>
+  <header>
+    <div><b style="color:#fff; letter-spacing:1px;">AETHER</b> <span style="color:var(--muted)">// RETAIL CUSTOMER INTELLIGENCE ENGINE</span></div>
+    <div class="mono" style="color:var(--emerald)">● SYS_ONLINE (ROC-AUC: 0.892 | BRIER: 0.078)</div>
+  </header>
+  <div class="grid-kpi">
+    <div class="kpi"><div class="mono" style="font-size:0.65rem; color:var(--muted);">30D PREDICTED REPURCHASERS</div><div class="kpi-val mono" style="color:var(--emerald);">31,450</div><div style="font-size:0.7rem; color:var(--emerald);">+12.4% vs cohort</div></div>
+    <div class="kpi"><div class="mono" style="font-size:0.65rem; color:var(--muted);">PROJECTED PIPELINE GMV</div><div class="kpi-val mono" style="color:var(--cyan);">$4,892,100</div><div style="font-size:0.7rem; color:var(--muted);">Calibrated Gamma-Gamma</div></div>
+    <div class="kpi"><div class="mono" style="font-size:0.65rem; color:var(--muted);">LATENT AT-RISK CHURN VALUE</div><div class="kpi-val mono" style="color:var(--crimson);">$1,142,800</div><div style="font-size:0.7rem; color:var(--crimson);">Drift Ratio &gt; 1.8</div></div>
+    <div class="kpi"><div class="mono" style="font-size:0.65rem; color:var(--muted);">PAID AD OPEX SAVED</div><div class="kpi-val mono" style="color:var(--amber);">$184,320</div><div style="font-size:0.7rem; color:var(--muted);">Organic Retarget Exclusions</div></div>
+  </div>
+  <div class="main">
+    <div class="box">
+      <div class="box-head"><span>TOPOGRAPHY: CYCLE DRIFT (X) VS. PURCHASE PROPENSITY (Y)</span><span class="mono" style="color:var(--muted); font-size:0.65rem;">HOVER NODE TO INSPECT</span></div>
+      <div style="flex:1; position:relative;"><canvas id="radar"></canvas></div>
+    </div>
+    <div class="box">
+      <div class="box-head"><span>ACTIVE CUSTOMER STREAM</span><span class="mono" style="color:var(--cyan); font-size:0.65rem;">PROPENSITY DECILES</span></div>
+      <div class="table-wrap">
+        <table><thead><tr><th>ID</th><th>DRIFT</th><th>PROPENSITY</th><th>E[M]</th></tr></thead><tbody id="tbody"></tbody></table>
+      </div>
+    </div>
+  </div>
+  <script>
+    const customers = Array.from({length: 80}, (_, i) => {
+      const ipi = Math.floor(Math.random() * 40) + 15;
+      const drift = +(Math.random() * 2.5 + 0.3).toFixed(2);
+      const prop = +(Math.max(0.05, Math.min(0.98, 1 - (drift - 0.7)*0.4 + (Math.random()*0.15-0.07)))).toFixed(2);
+      const em = Math.floor(Math.random() * 180) + 40;
+      return { id: 'CUST-' + (1000 + i), ipi, drift, prop, em };
+    });
+    const tb = document.getElementById('tbody');
+    tb.innerHTML = customers.map(c => `<tr><td style="color:var(--cyan)">${c.id}</td><td>${c.drift}x</td><td style="color:${c.prop > 0.6 ? 'var(--emerald)' : 'inherit'}">${Math.round(c.prop*100)}%</td><td>$${c.em}</td></tr>`).join('');
+    const canvas = document.getElementById('radar');
+    const ctx = canvas.getContext('2d');
+    function resize() { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; draw(); }
+    window.onresize = resize;
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.beginPath();
+      ctx.moveTo(canvas.width/2, 0); ctx.lineTo(canvas.width/2, canvas.height);
+      ctx.moveTo(0, canvas.height/2); ctx.lineTo(canvas.width, canvas.height/2); ctx.stroke();
+      customers.forEach(c => {
+        const x = (c.drift / 3.0) * (canvas.width - 40) + 20;
+        const y = canvas.height - (c.prop * (canvas.height - 40) + 20);
+        ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2);
+        ctx.fillStyle = c.em > 120 ? '#05ffa1' : (c.em > 80 ? '#00f0ff' : '#ffb800');
+        ctx.fill();
+      });
+    }
+    setTimeout(resize, 40);
+  </script>
+</body>
+</html>
